@@ -115,6 +115,7 @@ I became vaguely interested in (and then obsessed with) what makes for effective
 - [https://ggplot2.tidyverse.org/index.html] -- More useful than you would imagine
 - [June Choe's personal website](https://yjunechoe.github.io/blog.html#category:ggplot2) -- June really seems to understand what's going on. I'm just trying to make pretty graphs. His `ggtrace` package might be of interest if you really want to understand how `ggplot` works. [This](https://yjunechoe.github.io/posts/2021-06-24-setting-up-and-debugging-custom-fonts/#advanced-font-features) post was also quite helpful in understanding how `ggplot` handles fonts. I read this quite closely but ended up taking a different path.
 - [Creating corporate color palettes for ggplot2](https://drsimonj.svbtle.com/creating-corporate-colour-palettes-for-ggplot2) -- A step-by-step guide to implementing custom color palettes as scales in `ggplot`
+- [ggplot extension gallery](https://exts.ggplot2.tidyverse.org/gallery/)
 
 ### Other stuff
 

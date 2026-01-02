@@ -1,6 +1,7 @@
 require(showtext)
 require(ggpubr)
 require(ggtext)
+require(ggprism)
 
 ### THEME OBJECTS
 
@@ -24,10 +25,8 @@ theme_personal <- function() {
     alt_font <- "Intel One"
 
 
-
     theme_minimal() %+replace%
         theme(
-
             ### DEBUGGING
             # plot.background = element_rect(
             #     color = "palevioletred1",
@@ -39,9 +38,7 @@ theme_personal <- function() {
             line = element_line(
                 color = "#676E73"
             ),
-            text = element_text(
-                family = "Inter"
-            ),
+            text = element_text(family = "Inter"),
 
             ### Labelling
             plot.title = element_markdown(
@@ -118,7 +115,7 @@ theme_personal <- function() {
             legend.justification = "left",
             legend.box.margin = margin(t = 5, r = 5, b = 5, l = 0, unit = "pt"),
             legend.margin = margin(t = 5, r = 5, b = 5, l = 0, unit = "pt"),
-            legend.title.align = 0,
+            # legend.title.align = 0,
             # legend.key.size = unit(20, unit = "pt"),
             legend.title = element_text(
                 family = font,
@@ -139,19 +136,86 @@ theme_personal <- function() {
 
 
 ggsave_personal <- function(
-    height = 500,
-    width = 760,
-    units = "px",
-    dpi = 300,
-    bg = "white") {
-    ggplot::ggsave(
-        height = height,
-        width = width,
+  plot = NULL,
+  filename = NULL,
+  size = NULL,
+  height = NULL,
+  width = NULL,
+  units = "in",
+  dpi = 300,
+  bg = "white",
+  ...
+) {
+    # Size preset lookup
+    # Dimensions optimized for LaTeX integration with 1" margins
+    # Standard letter paper (8.5" x 11") with 1" margins = 6.5" text width
+    size_presets <- list(
+        # Full-width figure for LaTeX documents
+        # Width: 6.5" matches \textwidth in standard article class with 1" margins
+        # LaTeX usage: \includegraphics[width=\textwidth]{figure.png} - no scaling needed
+        "full" = list(width = 6.5, height = 9.0),
+
+        # Half-width for two panels side-by-side
+        # Width: 3.2" allows spacing between panels (slightly less than half)
+        # LaTeX usage: \includegraphics[width=0.48\textwidth]{figure.png} or \includegraphics[width=3.2in]{figure.png}
+        "half" = list(width = 3.2, height = 9.0),
+
+        # Full-width Beamer presentation slide (16:9 aspect ratio)
+        # Standard Beamer slide dimensions optimized for font sizes: 18pt title, 16pt subtitle, 12pt body
+        "full_presentation" = list(width = 10.0, height = 5.625),
+
+        # Half-width presentation slide (maintains 16:9 aspect ratio)
+        "half_presentation" = list(width = 5.0, height = 2.8125)
+    )
+
+    # Apply size preset if specified (overrides custom height/width)
+    if (!is.null(size)) {
+        if (size %in% names(size_presets)) {
+            preset <- size_presets[[size]]
+            width <- preset$width
+            height <- preset$height
+        } else {
+            warning(paste0(
+                "Unknown size preset '", size, "'. Available presets: ",
+                paste(names(size_presets), collapse = ", ")
+            ))
+        }
+    }
+
+    # DPI and pixel count reference:
+    # - 300 DPI: standard print quality (1" = 300px) - recommended for publications
+    # - 150 DPI: web quality (1" = 150px) - suitable for online viewing
+    # - 72 DPI: screen resolution (1" = 72px) - basic screen display
+    # When using custom dimensions, calculate pixels: width_inches * dpi = width_pixels
+    # Example: 6.5" width at 300 DPI = 1950px
+
+    # Prepare arguments for ggsave
+    # Note: plot can be NULL (ggsave will use last_plot() in that case)
+    # Piping support: my_plot %>% ggsave_personal(...) works because %>% passes as first positional argument
+    ggsave_args <- list(
+        plot = plot,
+        filename = filename,
         units = units,
         dpi = dpi,
-        bg = bg,
-        ...
+        bg = bg
     )
+
+    # Only add height/width if they are set (either via size preset or custom values)
+    if (!is.null(height)) {
+        ggsave_args$height <- height
+    }
+    if (!is.null(width)) {
+        ggsave_args$width <- width
+    }
+
+    # Add any additional arguments passed via ...
+    dots <- list(...)
+    if (length(dots) > 0) {
+        ggsave_args <- c(ggsave_args, dots)
+    }
+
+    # Call ggplot2::ggsave
+    do.call(ggplot2::ggsave, ggsave_args)
 }
 
 
@@ -166,7 +230,9 @@ personal_colors <- c(
     personal_purple = "#9E00FF",
     personal_tan = "#BDB8AC",
     personal_red = "#EE2700",
-    personal_yellow = "#FFDB2A"
+    personal_yellow = "#FFDB2A",
+    personal_democratic_blue = "#0066CC",
+    personal_republican_red = "#CC0000"
 )
 
 personal_cols <- function(...) {
@@ -201,6 +267,10 @@ personal_palettes <- list(
         "personal_purple",
         "personal_fuscia",
         "personal_red"
+    ),
+    `us_partisan` = personal_cols(
+        "personal_democratic_blue",
+        "personal_republican_red"
     )
 )
 
@@ -217,11 +287,12 @@ personal_pal <- function(palette = "main", reverse = FALSE, n = NULL, ...) {
 }
 
 scale_color_personal <- function(
-    palette = "main",
-    discrete = TRUE,
-    reverse = FALSE,
-    n_colors = NULL,
-    ...) {
+  palette = "main",
+  discrete = TRUE,
+  reverse = FALSE,
+  n_colors = NULL,
+  ...
+) {
     pal <- personal_pal(
         palette = palette,
         reverse = reverse,
@@ -236,11 +307,12 @@ scale_color_personal <- function(
 }
 
 scale_fill_personal <- function(
-    palette = "main",
-    discrete = TRUE,
-    reverse = FALSE,
-    n_colors = NULL,
-    ...) {
+  palette = "main",
+  discrete = TRUE,
+  reverse = FALSE,
+  n_colors = NULL,
+  ...
+) {
     pal <- personal_pal(
         palette = palette,
         reverse = reverse,
@@ -252,6 +324,85 @@ scale_fill_personal <- function(
     } else {
         scale_fill_gradientn(colors = pal(256), ...)
     }
+}
+
+### HIGHLIGHT SCALE FUNCTIONS
+scale_color_highlight <- function(
+  grey = "#CCCCCC",
+  highlight_colors = NULL,
+  n_colors = NULL,
+  palette = "main",
+  reverse = FALSE,
+  ...
+) {
+    # If colors not provided, use main personal palette
+    if (is.null(highlight_colors)) {
+        if (is.null(n_colors)) {
+            # Default to 6 colors from main palette (can handle up to 6 non-zero categories)
+            n_colors <- 6
+        }
+        pal <- personal_pal(
+            palette = palette,
+            reverse = reverse,
+            n = n_colors
+        )
+        highlight_colors <- pal(n_colors)
+    }
+
+    # Create values mapping: 0 -> grey, 1+ -> colors
+    # Use scale_color_manual with a named vector mapping values to colors
+    # Values are converted to character strings for matching
+    # Note: scale_color_manual works with both numeric and factor values
+    values_map <- c("0" = grey)
+    if (length(highlight_colors) > 0) {
+        values_map <- c(values_map, setNames(highlight_colors, as.character(seq_along(highlight_colors))))
+    }
+
+    # Direct call - scale_color_manual is always discrete, so no need for argument filtering
+    scale_color_manual(
+        values = values_map,
+        na.value = grey,
+        ...
+    )
+}
+
+scale_fill_highlight <- function(
+  grey = "#CCCCCC",
+  colors = NULL,
+  n_colors = NULL,
+  palette = "main",
+  reverse = FALSE,
+  ...
+) {
+    # If colors not provided, use main personal palette
+    if (is.null(colors)) {
+        if (is.null(n_colors)) {
+            # Default to 6 colors from main palette (can handle up to 6 non-zero categories)
+            n_colors <- 6
+        }
+        pal <- personal_pal(
+            palette = palette,
+            reverse = reverse,
+            n = n_colors
+        )
+        colors <- pal(n_colors)
+    }
+
+    # Create values mapping: 0 -> grey, 1+ -> colors
+    # Use scale_fill_manual with a named vector mapping values to colors
+    # Values are converted to character strings for matching
+    # Note: scale_fill_manual works with both numeric and factor values
+    values_map <- c("0" = grey)
+    if (length(colors) > 0) {
+        values_map <- c(values_map, setNames(colors, as.character(seq_along(colors))))
+    }
+
+    # Direct call - scale_fill_manual is always discrete, so no need for argument filtering
+    scale_fill_manual(
+        values = values_map,
+        na.value = grey,
+        ...
+    )
 }
 
 ### STIGLER FUNCTIONS
@@ -275,7 +426,6 @@ stigler_cols <- function(...) {
     }
     stigler_colors[cols]
 }
-
 
 
 stigler_palettes <- list(
@@ -329,10 +479,11 @@ stigler_pal <- function(palette = "main", reverse = FALSE, ...) {
 
 
 scale_color_stigler <- function(
-    palette = "main",
-    reverse = FALSE,
-    discrete = TRUE,
-    ...) {
+  palette = "main",
+  reverse = FALSE,
+  discrete = TRUE,
+  ...
+) {
     pal <- stigler_pal(palette = palette, reverse = reverse, ...)
     if (discrete) {
         discrete_scale("color", paste0("stigler_", palette), palette = pal, ...)
@@ -342,10 +493,11 @@ scale_color_stigler <- function(
 }
 
 scale_fill_stigler <- function(
-    palette = "main",
-    reverse = FALSE,
-    discrete = TRUE,
-    ...) {
+  palette = "main",
+  reverse = FALSE,
+  discrete = TRUE,
+  ...
+) {
     pal <- stigler_pal(palette = palette, reverse = reverse, ...)
     if (discrete) {
         discrete_scale("fill", paste0("stigler_", palette), palette = pal, ...)
