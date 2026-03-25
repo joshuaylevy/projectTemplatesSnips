@@ -36,6 +36,7 @@ theme_personal <- function() {
             ### Setup
             plot.margin = margin(t = 20, r = 25, b = 20, l = 25),
             line = element_line(
+                # linewidth = 0.5,
                 color = "#676E73"
             ),
             text = element_text(family = "Inter"),
@@ -92,9 +93,9 @@ theme_personal <- function() {
             ),
             axis.text.y.right = element_text(
                 size = 11,
-                hjust = 1,
-                vjust = -0.5,
-                margin = margin(t = 0, r = 0, b = 0, l = -20, unit = "pt"),
+                hjust = -1,
+                vjust = -0.5, # Economist-style: text positioned above gridline
+                # margin = margin(t = 0, r = 0, b = 0, l = -20, unit = "pt"),
                 debug = FALSE
             ),
             axis.line.x = element_line(
